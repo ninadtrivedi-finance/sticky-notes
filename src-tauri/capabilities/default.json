@@ -1,0 +1,15 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for the sticky notes app",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "notification:default",
+    "notification:allow-notify",
+    "notification:allow-request-permission",
+    "notification:allow-is-permission-granted",
+    "sql:default",
+    "sql:allow-execute",
+    "sql:allow-select"
+  ]
+}
