@@ -74,10 +74,16 @@ export function useNotes() {
 
   const deleteCompleted = useCallback(async () => {
     const completed = notes.filter((n) => n.isCompleted);
+    const deletedIds: string[] = [];
     for (const note of completed) {
-      await invoke("delete_note", { id: note.id });
+      try {
+        await invoke("delete_note", { id: note.id });
+        deletedIds.push(note.id);
+      } catch (e) {
+        console.error("Failed to delete note:", note.id, e);
+      }
     }
-    setNotes((prev) => prev.filter((n) => !n.isCompleted));
+    setNotes((prev) => prev.filter((n) => !deletedIds.includes(n.id)));
   }, [notes]);
 
   return { notes, loading, addNote, editNote, removeNote, deleteCompleted };

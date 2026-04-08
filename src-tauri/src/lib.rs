@@ -23,8 +23,22 @@ fn get_notes(state: State<DbState>) -> Result<Vec<StickyNote>, String> {
     db::get_all_notes(&conn).map_err(|e| e.to_string())
 }
 
+fn validate_color(color: &str) -> Result<(), String> {
+    if color.len() != 7 || !color.starts_with('#') || !color[1..].chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err("Invalid color format (expected #RRGGBB)".to_string());
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn create_note(state: State<DbState>, title: String, color: String, position_x: f64, position_y: f64) -> Result<StickyNote, String> {
+    if title.len() > 500 {
+        return Err("Title too long (max 500 characters)".to_string());
+    }
+    validate_color(&color)?;
+    if !position_x.is_finite() || !position_y.is_finite() {
+        return Err("Invalid position values".to_string());
+    }
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let now = Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let note = StickyNote {
@@ -48,12 +62,24 @@ fn create_note(state: State<DbState>, title: String, color: String, position_x: 
 
 #[tauri::command]
 fn update_note(state: State<DbState>, note: StickyNote) -> Result<(), String> {
+    if note.title.len() > 500 {
+        return Err("Title too long (max 500 characters)".to_string());
+    }
+    if note.body.len() > 10000 {
+        return Err("Note body too long (max 10000 characters)".to_string());
+    }
+    validate_color(&note.color)?;
+    if !note.position_x.is_finite() || !note.position_y.is_finite()
+        || !note.width.is_finite() || !note.height.is_finite() {
+        return Err("Invalid numeric values".to_string());
+    }
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     db::update_note(&conn, &note).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn delete_note(state: State<DbState>, id: String) -> Result<(), String> {
+    Uuid::parse_str(&id).map_err(|_| "Invalid note ID".to_string())?;
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     db::delete_note(&conn, &id).map_err(|e| e.to_string())
 }

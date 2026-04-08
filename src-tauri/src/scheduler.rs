@@ -40,7 +40,8 @@ fn check_reminders(app: &AppHandle, db_path: &PathBuf) {
         };
 
         let body = if note.body.len() > 200 {
-            format!("{}...", &note.body[..200])
+            let truncated: String = note.body.chars().take(200).collect();
+            format!("{}...", truncated)
         } else if note.body.is_empty() {
             "You have a task due!".to_string()
         } else {
